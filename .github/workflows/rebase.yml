@@ -1,0 +1,33 @@
+name: Rebase
+
+on:
+  schedule: [cron: '* 12 * * *']
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Automatic rebase
+    runs-on: macos-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+  
+    - name: Fetch AOSP repo
+      run: |
+        REPO_URL=https://android.googlesource.com/platform/frameworks/opt/net/ims
+        BRANCH=$(git ls-remote --tags $REPO_URL | sed -e "s .*tags/  " -e 's \^.*  ' | grep "android-12" | sort -V | tail -n1)
+        git config user.name "SamarV-121"
+        git config user.email "samarvispute121@pm.me"
+        git fetch "$REPO_URL" "$BRANCH"
+
+    - name: Rebase
+      run: |
+        git rebase FETCH_HEAD
+
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        force: true
+        github_token: ${{ secrets.GITHUB_TOKEN }}
